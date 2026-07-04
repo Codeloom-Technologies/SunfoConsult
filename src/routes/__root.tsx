@@ -11,6 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Navbar } from "../components/site/Navbar";
+import { Footer } from "../components/site/Footer";
+import { LeadModal } from "../components/site/LeadModal";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,21 +81,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "SunfoConsult — Study in the UK with Confidence" },
+      {
+        name: "description",
+        content:
+          "SunfoConsult helps international students gain admission into top UK universities — expert guidance on applications, scholarships, and student visas.",
+      },
+      { name: "author", content: "SunfoConsult" },
+      {
+        name: "keywords",
+        content:
+          "UK Admission, Study in the UK, UK Universities, UK Student Visa, International Students, SunfoConsult",
+      },
+      { property: "og:title", content: "SunfoConsult — Study in the UK with Confidence" },
+      {
+        property: "og:description",
+        content:
+          "Expert admission guidance for UK universities. From application to visa approval, we help you study in the UK.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@SunfoConsult" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -119,8 +139,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <Footer />
+        <LeadModal />
+        <Toaster richColors position="top-center" />
+      </div>
     </QueryClientProvider>
   );
 }
