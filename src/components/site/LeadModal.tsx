@@ -8,11 +8,19 @@ import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "sunfo_lead_captured_v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+const COMPANY_ID = import.meta.env.VITE_COMPANY_ID as string;
 
 const leadSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(60),
   lastName: z.string().trim().min(1, "Last name is required").max(60),
   email: z.string().trim().email("Enter a valid email address").max(200),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(6, "Enter a valid phone number")
+    .max(30, "Enter a valid phone number")
+    .regex(/^[+\d][\d\s()-]*$/, "Enter a valid phone number"),
 });
 
 type Errors = Partial<Record<keyof z.infer<typeof leadSchema>, string>>;
@@ -20,7 +28,7 @@ type Errors = Partial<Record<keyof z.infer<typeof leadSchema>, string>>;
 export function LeadModal() {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [values, setValues] = useState({ firstName: "", lastName: "", email: "" });
+  const [values, setValues] = useState({ firstName: "", lastName: "", email: "", phoneNumber: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -59,24 +67,50 @@ export function LeadModal() {
     }
     setSubmitting(true);
     try {
-      // TODO: swap to server function / CRM webhook when backend is enabled.
-      await new Promise((r) => setTimeout(r, 600));
+      const res = await fetch(`${API_BASE_URL}/admissions/lead`, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+          "company-id": COMPANY_ID,
+        },
+        body: JSON.stringify({ ...parsed.data, preferences: {} }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ ...parsed.data, capturedAt: new Date().toISOString() }),
       );
       setSubmitted(true);
       toast.success("Thanks! An advisor will be in touch shortly.");
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
+  // Prevent closing until the form has been submitted successfully.
+  const handleOpenChange = (next: boolean) => {
+    if (!next && !submitted) return;
+    setOpen(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={`sm:max-w-md ${submitted ? "" : "[&>button]:hidden"}`}
+        onEscapeKeyDown={(e) => {
+          if (!submitted) e.preventDefault();
+        }}
+        onPointerDownOutside={(e) => {
+          if (!submitted) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (!submitted) e.preventDefault();
+        }}
+      >
         {submitted ? (
           <div className="py-4 text-center">
             <CheckCircle2 className="mx-auto h-12 w-12 text-gold" />
@@ -140,6 +174,21 @@ export function LeadModal() {
                   autoComplete="email"
                 />
                 {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="phoneNumber">Phone number *</Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  value={values.phoneNumber}
+                  onChange={update("phoneNumber")}
+                  aria-invalid={!!errors.phoneNumber}
+                  autoComplete="tel"
+                  placeholder="+44 20 1234 5678"
+                />
+                {errors.phoneNumber && (
+                  <p className="text-xs text-destructive">{errors.phoneNumber}</p>
+                )}
               </div>
 
               <p className="flex items-start gap-2 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
