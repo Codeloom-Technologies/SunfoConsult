@@ -100,8 +100,7 @@ export function LeadModal() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-md"
-        showCloseButton={submitted}
+        className={`sm:max-w-md ${submitted ? "" : "[&>button]:hidden"}`}
         onEscapeKeyDown={(e) => {
           if (!submitted) e.preventDefault();
         }}
